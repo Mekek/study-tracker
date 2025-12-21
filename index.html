@@ -196,8 +196,29 @@ function calculateProgress() {
     uncheckedCount += (checkpoints.length - checked);
   }
 
-  const speed = uncheckedCount>0?(diffDays/uncheckedCount).toFixed(1):"∞";
-  document.getElementById("speed").textContent = `Требуемая скорость закрытия — ${speed} дней/точку`;
+  // Рассчитываем скорость в днях на точку
+  const speedPerPoint = uncheckedCount > 0 ? (diffDays / uncheckedCount).toFixed(1) : "∞";
+  
+  // Рассчитываем количество точек в день (обратная величина)
+  let pointsPerDayText = "";
+  if (uncheckedCount > 0 && diffDays > 0) {
+    const pointsPerDay = (uncheckedCount / diffDays).toFixed(1);
+    // Правильное склонение слова "точка"
+    let pointWord = "точек";
+    const pointsNum = parseFloat(pointsPerDay);
+    if (pointsNum === 1) pointWord = "точка";
+    else if (pointsNum > 1 && pointsNum < 5) pointWord = "точки";
+    
+    pointsPerDayText = ` или ${pointsPerDay} ${pointWord}/день`;
+  } else if (uncheckedCount === 0) {
+    pointsPerDayText = " — все точки закрыты!";
+  } else if (diffDays <= 0) {
+    pointsPerDayText = " — время вышло!";
+  }
+
+  document.getElementById("speed").textContent = 
+    `Требуемая скорость закрытия — ${speedPerPoint} дней/точку${pointsPerDayText}`;
+  
   document.getElementById("percent").textContent = totalProgress.toFixed(1)+"%";
 
   const bar = document.getElementById("progress-fill");

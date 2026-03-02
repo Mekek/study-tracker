@@ -4,168 +4,49 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>🎓 Трекер учебного прогресса</title>
-
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
-
-html, body {
-  margin: 0;
-  padding: 0;
-  min-height: 100%;
-  font-family: 'Poppins', sans-serif;
-  color: white;
-  transition: background 0.8s ease;
-}
-
-body {
-  background: radial-gradient(circle at 20% 30%, #6dd5fa, #2980b9 40%, #1c1c1c 100%);
-  background-attachment: fixed;
-  background-size: 100% 100%;
-  background-repeat: no-repeat;
-}
-
-h1 {
-  text-align: center;
-  margin: 25px 0 10px;
-  font-size: 2.2em;
-  text-shadow: 0 0 15px rgba(255,255,255,0.4);
-}
-
-.container {
-  width: 90%;
-  max-width: 950px;
-  margin: 0 auto 40px;
-  background: rgba(0, 0, 0, 0.35);
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
-  padding: 25px 35px;
-  box-shadow: 0 0 30px rgba(0,0,0,0.5);
-}
-
-.progress-container {
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 25px;
-  background: rgba(255,255,255,0.2);
-  border-radius: 10px;
-  overflow: hidden;
-  margin-top: 10px;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #76ff03, #00e676);
-  width: 0%;
-  border-radius: 10px;
-  transition: width 0.6s ease, background 0.6s ease;
-}
-
-.stats {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-  font-size: 1.1em;
-}
-
-.discipline {
-  margin-bottom: 20px;
-  background: rgba(255, 255, 255, 0.08);
-  padding: 10px 15px;
-  border-radius: 10px;
-}
-
-.discipline h3 {
-  margin-bottom: 8px;
-  font-weight: 600;
-}
-
-.discipline-checkpoints {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 10px 12px;
-}
-
-.checkpoint {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.checkpoint input:checked + label {
-  text-decoration: line-through;
-  color: #ccc;
-}
-
-#countdown {
-  position: fixed;
-  right: 20px;
-  top: 20px;
-  background: rgba(0,0,0,0.45);
-  border-radius: 12px;
-  padding: 10px 18px;
-  font-weight: 600;
-  backdrop-filter: blur(5px);
-  box-shadow: 0 0 10px rgba(0,0,0,0.3);
-}
-
-#speed {
-  text-align: center;
-  font-size: 1.1em;
-  margin-bottom: 10px;
-}
+html, body { margin:0; padding:0; min-height:100%; font-family:'Poppins',sans-serif; color:white; transition: background 0.8s ease; }
+body { background: radial-gradient(circle at 20% 30%, #6dd5fa, #2980b9 40%, #1c1c1c 100%); background-attachment: fixed; background-size:100% 100%; }
+h1 { text-align:center; margin:25px 0 10px; font-size:2.2em; text-shadow:0 0 15px rgba(255,255,255,0.4); }
+.container { width:90%; max-width:950px; margin:0 auto 40px; background:rgba(0,0,0,0.35); backdrop-filter: blur(10px); border-radius:20px; padding:25px 35px; box-shadow:0 0 30px rgba(0,0,0,0.5); }
+.progress-container { text-align:center; margin-bottom:30px; }
+.progress-bar { width:100%; height:25px; background:rgba(255,255,255,0.2); border-radius:10px; overflow:hidden; margin-top:10px; }
+.progress-fill { height:100%; background:linear-gradient(90deg,#76ff03,#00e676); width:0%; border-radius:10px; transition: width 0.6s ease, background 0.6s ease; }
+.stats { display:flex; justify-content:space-between; margin-bottom:10px; font-size:1.1em; }
+.discipline { margin-bottom:20px; background:rgba(255,255,255,0.08); padding:10px 15px; border-radius:10px; }
+.discipline h3 { margin-bottom:8px; font-weight:600; }
+.discipline-checkpoints { display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:10px 12px; }
+.checkpoint { display:flex; align-items:center; gap:6px; }
+.checkpoint input:checked + label { text-decoration: line-through; color:#ccc; }
+#countdown { position:fixed; right:20px; top:20px; background:rgba(0,0,0,0.45); border-radius:12px; padding:10px 18px; font-weight:600; backdrop-filter: blur(5px); box-shadow:0 0 10px rgba(0,0,0,0.3); }
+#speed { text-align:center; font-size:1.1em; margin-bottom:10px; }
 </style>
 </head>
-
 <body>
 <h1>🎓 Трекер учебного прогресса</h1>
 <div id="countdown"></div>
-
 <div class="container">
   <div class="progress-container">
     <div id="speed">Требуемая скорость закрытия — 0 дней/точку</div>
-    <div class="stats">
-      <span>Прогресс:</span>
-      <span id="percent">0%</span>
-    </div>
-    <div class="progress-bar">
-      <div class="progress-fill" id="progress-fill"></div>
-    </div>
+    <div class="stats"><span>Прогресс:</span><span id="percent">0%</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
   </div>
   <div id="disciplines"></div>
 </div>
 
 <script>
-// ====== НАСТРОЙКИ ДАТ ======
+// ------------------ ДАТЫ ------------------
 const START_OF_SEMESTER = new Date("2026-02-01T00:00:00");
 const END_OF_SESSION = new Date("2026-06-30T23:59:59");
 
-// ====== ДИСЦИПЛИНЫ (АКТУАЛЬНЫЕ) ======
+// ------------------ ДАННЫЕ ------------------
 const disciplines = {
   "Компьютерное зрение": [
-    "Онлайн курс — Раздел 1",
-    "Онлайн курс — Раздел 2",
-    "Онлайн курс — Раздел 3",
-    "Онлайн курс — Раздел 4",
-    "Онлайн курс — Раздел 5",
-    "Зачет"
+    "Онлайн курс — Раздел 1","Онлайн курс — Раздел 2","Онлайн курс — Раздел 3",
+    "Онлайн курс — Раздел 4","Онлайн курс — Раздел 5","Зачет"
   ],
-
-  "Компьютерные сети": [
-    "ДЗ 1",
-    "ЛР 1",
-    "ЛР 2",
-    "ЛР 3",
-    "ЛР 4",
-    "Т1",
-    "Т2",
-    "Т3",
-    "ТИт"
-  ],
-
+  "Компьютерные сети": ["ДЗ 1","ЛР 1","ЛР 2","ЛР 3","ЛР 4","Т1","Т2","Т3","ТИт"],
   "Нейротехнологии и аффективные вычисления": [
     { label: "Рубежная работа 1", weight: 10 },
     { label: "Рубежная работа 2", weight: 10 },
@@ -177,123 +58,81 @@ const disciplines = {
     { label: "ЛР 1", weight: 10 },
     { label: "ЛР 2", weight: 10 }
   ],
-
-  "Программирование встроенных систем": [
-    "Проект (ТЗ)",
-    "Проект (реализация)",
-    "Проект (доработка)"
-  ],
-
+  "Программирование встроенных систем": ["Проект (ТЗ)","Проект (реализация)","Проект (доработка)"],
   "Сетевые технологии интернета вещей": [
-    "Проект (ТЗ)",
-    "Проект (получить компоненты)",
-    "Проект (собрать компоненты)",
-    "Проект (Собрать прототип)",
-    "Проект (Запрограммировать)",
-    "Проект (Собрать финальное устройство)"
+    "Проект (ТЗ)","Проект (получить компоненты)","Проект (собрать компоненты)",
+    "Проект (Собрать прототип)","Проект (Запрограммировать)","Проект (Собрать финальное устройство)"
   ],
-
-  "САПР": [
-    "ДЗ 1",
-    "ДЗ 2",
-    "Тест",
-    "Экзамен"
-  ],
-
+  "САПР": ["ДЗ 1","ДЗ 2","Тест","Экзамен"],
   "Стартап-трек": Array.from({length:10}, (_,i)=>`Посещение ${i+1}`),
-
-  "ТПО (Тестирование ПО)": [
-    "ЛР 1",
-    "ЛР 2",
-    "ЛР 3",
-    "ЛР 4",
-    "Рубежная работа"
-  ],
-
+  "ТПО (Тестирование ПО)": ["ЛР 1","ЛР 2","ЛР 3","ЛР 4","Рубежная работа"],
   "Физическая культура и спорт": Array.from({length:20}, (_,i)=>`Посещение ${i+1}`),
-
-  "Философия": [
-    ...Array.from({length:10}, (_,i)=>`Посещение ${i+1}`),
-    "Экзамен",
-    "Проектная работа",
-    "Текст 1",
-    "Тест 2"
-  ],
-
-  // НОВЫЙ ПРЕДМЕТ
+  "Философия": [...Array.from({length:10}, (_,i)=>`Посещение ${i+1}`), "Экзамен", "Проектная работа", "Текст 1", "Тест 2"],
   "Английский язык": Array.from({length:19}, (_,i)=>`Посещение ${i+1}`)
 };
 
-// ====== УТИЛИТЫ ======
-function slugify(text){
-  return text.toLowerCase().replace(/\s+/g,'_').replace(/[^\w]/g,'');
+// ------------------ УНИКАЛЬНЫЕ ID ------------------
+// Для корректной работы с русскими названиями используем base64 от UTF-8
+function makeId(text){
+  // Кодируем UTF-8 -> base64, затем безопасно приводим к id
+  try{
+    const b64 = btoa(unescape(encodeURIComponent(text))); // base64 от UTF-8
+    // заменим + / = на безопасные символы (чтобы id был чистым)
+    return "d_" + b64.replace(/=+$/,'').replace(/\+/g,'-').replace(/\//g,'_');
+  } catch(e){
+    // запасной вариант (на случай старых браузеров)
+    return "d_" + text.replace(/\s+/g,'_').replace(/[^\w\-]/g,'');
+  }
 }
 
-const STORAGE_KEY = "trackerState_v4";
+// ------------------ LOCAL STORAGE ------------------
+const STORAGE_KEY = "trackerState_v5";
+
+function saveState(){
+  const obj = {};
+  document.querySelectorAll("input[type='checkbox']").forEach(cb => obj[cb.id] = cb.checked);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+}
+
+function loadState(){
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
+  catch(e){ return {}; }
+}
+
+// ------------------ РЕНДЕР ------------------
 const container = document.getElementById("disciplines");
 
-function saveState() {
-  const state = {};
-  document.querySelectorAll("input[type='checkbox']").forEach(cb=>{
-    state[cb.id] = cb.checked;
-  });
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
-
-function loadState() {
-  return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-}
-
-// ====== РЕНДЕР ======
-function render() {
+function render(){
   const saved = loadState();
   container.innerHTML = "";
+  for(const [disc, items] of Object.entries(disciplines)){
+    const block = document.createElement("div"); block.className = "discipline";
+    const title = document.createElement("h3"); title.textContent = disc; block.appendChild(title);
 
-  for(const [discipline, checkpoints] of Object.entries(disciplines)){
-    const block = document.createElement("div");
-    block.classList.add("discipline");
+    const grid = document.createElement("div"); grid.className = "discipline-checkpoints";
+    const baseId = makeId(disc);
 
-    const title = document.createElement("h3");
-    title.textContent = discipline;
-    block.appendChild(title);
-
-    const grid = document.createElement("div");
-    grid.classList.add("discipline-checkpoints");
-
-    checkpoints.forEach((item, i) => {
+    items.forEach((item, idx) => {
       const labelText = typeof item === "string" ? item : item.label;
-      const id = `${slugify(discipline)}-${i}`;
+      const id = `${baseId}-${idx}`;
 
-      const wrapper = document.createElement("div");
-      wrapper.classList.add("checkpoint");
+      const wrapper = document.createElement("div"); wrapper.className = "checkpoint";
+      const checkbox = document.createElement("input"); checkbox.type = "checkbox"; checkbox.id = id;
+      checkbox.checked = !!saved[id];
+      checkbox.addEventListener("change", ()=>{ saveState(); calculateProgress(); });
 
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.id = id;
-      checkbox.checked = saved[id] || false;
-      checkbox.addEventListener("change", ()=>{
-        saveState();
-        calculateProgress();
-      });
+      const label = document.createElement("label"); label.htmlFor = id; label.textContent = labelText;
 
-      const label = document.createElement("label");
-      label.htmlFor = id;
-      label.textContent = labelText;
-
-      wrapper.appendChild(checkbox);
-      wrapper.appendChild(label);
-      grid.appendChild(wrapper);
+      wrapper.appendChild(checkbox); wrapper.appendChild(label); grid.appendChild(wrapper);
     });
 
-    block.appendChild(grid);
-    container.appendChild(block);
+    block.appendChild(grid); container.appendChild(block);
   }
-
   calculateProgress();
 }
 
-// ====== ПРОГРЕСС + УМНЫЙ ГРАДИЕНТ ======
-function calculateProgress() {
+// ------------------ ПРОГРЕСС + ГРАДИЕНТ ------------------
+function calculateProgress(){
   const now = new Date();
   const disciplineNames = Object.keys(disciplines);
   const disciplineWeight = 100 / disciplineNames.length;
@@ -302,88 +141,76 @@ function calculateProgress() {
   let uncheckedCount = 0;
   let totalPoints = 0;
 
-  for(const [discipline, items] of Object.entries(disciplines)){
-    const normalized = items.map(it =>
-      typeof it === "string" ? {label: it, weight: 1} : it
-    );
-
+  for(const [disc, items] of Object.entries(disciplines)){
+    const normalized = items.map(it => typeof it === "string" ? {label: it, weight:1} : it);
     const totalWeight = normalized.reduce((s,c)=>s+c.weight,0);
     let checkedWeight = 0;
+    const baseId = makeId(disc);
 
-    normalized.forEach((cp, i)=>{
-      const id = `${slugify(discipline)}-${i}`;
-      const checked = document.getElementById(id).checked;
+    normalized.forEach((cp, idx) => {
+      const id = `${baseId}-${idx}`;
+      const el = document.getElementById(id);
+      // на всякий случай — защищаемся от несуществующих элементов
+      const checked = el ? el.checked : false;
       totalPoints++;
       if(checked) checkedWeight += cp.weight;
       else uncheckedCount++;
     });
 
-    totalProgress += (checkedWeight/totalWeight) * disciplineWeight;
+    const fraction = totalWeight > 0 ? (checkedWeight / totalWeight) : 0;
+    totalProgress += fraction * disciplineWeight;
   }
 
-  totalProgress = Math.min(100, Math.max(0, totalProgress));
+  totalProgress = Math.max(0, Math.min(100, totalProgress));
   document.getElementById("percent").textContent = totalProgress.toFixed(1) + "%";
   document.getElementById("progress-fill").style.width = totalProgress + "%";
 
-  // ===== СКОРОСТЬ =====
+  // скорость
   const diffDays = Math.ceil((END_OF_SESSION - now)/(1000*60*60*24));
-  const speedPerPoint = uncheckedCount > 0 ? (diffDays / uncheckedCount).toFixed(1) : "∞";
+  const speedPerPoint = uncheckedCount > 0 && diffDays > 0 ? (diffDays / uncheckedCount).toFixed(1) : (uncheckedCount === 0 ? "∞" : "—");
+  let pointsPerDayText = "";
+  if (uncheckedCount > 0 && diffDays > 0) {
+    const pointsPerDay = (uncheckedCount / diffDays).toFixed(1);
+    let word = "точек";
+    const n = parseFloat(pointsPerDay);
+    if (n === 1) word = "точка";
+    else if (n >1 && n <5) word = "точки";
+    pointsPerDayText = ` или ${pointsPerDay} ${word}/день`;
+  } else if (uncheckedCount === 0) pointsPerDayText = " — все точки закрыты!";
+  else if (diffDays <= 0) pointsPerDayText = " — время вышло!";
 
-  document.getElementById("speed").textContent =
-    `Требуемая скорость закрытия — ${speedPerPoint} дней/точку`;
+  document.getElementById("speed").textContent = `Требуемая скорость закрытия — ${speedPerPoint} дней/точку${pointsPerDayText}`;
 
-  // ===== УМНОЕ "КРАСНЕНИЕ" =====
-  const totalTime = END_OF_SESSION - START_OF_SEMESTER;
+  // градиент: время и оставшиеся точки
+  const totalTime = Math.max(1, END_OF_SESSION - START_OF_SEMESTER);
   const timePassed = now - START_OF_SEMESTER;
-  let timeRatio = Math.min(1, Math.max(0, timePassed / totalTime));
-
-  const remainingRatio = totalPoints > 0 ? uncheckedCount / totalPoints : 0;
-
-  // Главная формула стресса (и время, и долги)
+  let timeRatio = Math.max(0, Math.min(1, timePassed / totalTime));
+  const remainingRatio = totalPoints > 0 ? (uncheckedCount / totalPoints) : 0;
   let stress = Math.pow(timeRatio, 1.3) * remainingRatio;
+  if (diffDays <= 7 && diffDays >= 0) stress = Math.min(1, stress * 1.5);
 
-  // усиление за 7 дней до дедлайна
-  if(diffDays <= 7 && diffDays >= 0){
-    stress = Math.min(1, stress * 1.6);
-  }
-
-  // Цвет: синий (200) -> красный (0)
   const hue = 200 - (stress * 200);
-  const main = `hsl(${hue}, 80%, ${60 - stress*15}%)`;
-  const mid = `hsl(${Math.max(0,hue-20)}, 70%, ${40 - stress*10}%)`;
+  const main = `hsl(${hue}, ${80 + stress*10}%, ${60 - stress*15}%)`;
+  const mid = `hsl(${Math.max(0,hue-20)}, ${70}%, ${40 - stress*10}%)`;
 
-  document.body.style.background = `
-    radial-gradient(circle at 20% 30%, ${main}, ${mid} 40%, #1c1c1c 100%)
-  `;
+  document.body.style.background = `radial-gradient(circle at 20% 30%, ${main}, ${mid} 40%, #1c1c1c 100%)`;
 
-  // Цвет прогресс-бара тоже меняется
   const bar = document.getElementById("progress-fill");
-  if(stress > 0.6){
-    bar.style.background = "linear-gradient(90deg, #ff5252, #ff1744)";
-  } else if(stress > 0.3){
-    bar.style.background = "linear-gradient(90deg, #ffb347, #ff7043)";
-  } else {
-    bar.style.background = "linear-gradient(90deg, #76ff03, #00e676)";
-  }
+  if (stress > 0.6) bar.style.background = "linear-gradient(90deg, #ff5252, #ff1744)";
+  else if (stress > 0.3) bar.style.background = "linear-gradient(90deg, #ffb347, #ff7043)";
+  else bar.style.background = "linear-gradient(90deg,#76ff03,#00e676)";
 }
 
-// ====== ТАЙМЕР ======
+// ------------------ ТАЙМЕР ------------------
 function updateCountdown(){
   const now = new Date();
   const diff = END_OF_SESSION - now;
-
   const days = Math.floor(diff/(1000*60*60*24));
   const hours = Math.floor((diff/(1000*60*60))%24);
   const minutes = Math.floor((diff/(1000*60))%60);
   const seconds = Math.floor((diff/1000)%60);
-
-  if(diff > 0){
-    document.getElementById("countdown").textContent =
-      `⏳ До конца семестра: ${days}д ${hours}ч ${minutes}м ${seconds}с`;
-  } else {
-    document.getElementById("countdown").textContent =
-      "⏳ Время вышло! Сессия завершена";
-  }
+  if (diff > 0) document.getElementById("countdown").textContent = `⏳ До конца семестра: ${days}д ${hours}ч ${minutes}м ${seconds}с`;
+  else document.getElementById("countdown").textContent = "⏳ Время вышло! Семестр завершён";
 }
 
 setInterval(updateCountdown, 1000);

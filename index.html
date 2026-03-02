@@ -31,7 +31,6 @@ body {
   100% { background-position: 0% 50%; }
 }
 
-/* Тёплые тона к Новому году */
 body.warmer {
   background: radial-gradient(circle at 30% 30%, #ff9a9e, #fad0c4 25%, #fcb69f 60%, #1c1c1c 100%);
   background-attachment: fixed;
@@ -48,7 +47,7 @@ h1 {
 
 .container {
   width: 90%;
-  max-width: 900px;
+  max-width: 980px;
   margin: 0 auto 40px;
   background: rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(10px);
@@ -111,7 +110,7 @@ h1 {
 .checkpoint {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 8px;
 }
 
 .checkpoint label {
@@ -164,103 +163,146 @@ h1 {
 </div>
 
 <script>
+// --- Утилиты ---
+function slugify(text){
+  return String(text).toLowerCase()
+    .replace(/\s+/g,'_')
+    .replace(/[^\w\-]/g,'')
+    .replace(/\_+/g,'_');
+}
+
+const STORAGE_KEY = "trackerState_v2";
+
+// --- Данные дисциплин (обновлённый семестр) ---
+// Поддерживаются два варианта записи:
+// 1) ["Контроль 1","Контроль 2", ...]  — равные веса внутри дисциплины
+// 2) [{label:"Контроль", weight: <число>}, ...] — если нужно задать относительные веса (весовые коэффициенты внутри дисциплины)
 const disciplines = {
-  "Биометрия и нейротехнологии": ["Рубеж 1", "Рубеж 2", "Онлайн-курс", "ЛР"],
-  "English": [...Array.from({length:16}, (_,i)=>`Посещение ${i+1}`),"ДЗ 1","ДЗ 2","ДЗ 3","ДЗ 4"],
-  "Операционные системы": ["ЛР 1","ЛР 2","Рубеж", "Экзамен"],
-  "Основы электротехники": ["ЛР 1","ДЗ 1","ЛР 2","ДЗ 2","ЛР 3","ДЗ 3","ЛР 4","ДЗ 4", "Зачет"],
-  "Физра": Array.from({length:20}, (_,i)=>`Посещение ${i+1}`),
-  "ИНТ": ["Реферат"],
-  "Web-программирование": ["ЛР 1","ЛР 2","Рубеж 1","ЛР 3","ЛР 4","Рубеж 2"],
-  "Моделирование": ["ЛР 1","ЛР 2","Рубеж 1","ЛР 3","ЛР 4","Рубеж 2"]
+  "Компьютерное зрение": [
+    "Онлайн — Раздел 1",
+    "Онлайн — Раздел 2",
+    "Онлайн — Раздел 3",
+    "Онлайн — Раздел 4",
+    "Онлайн — Раздел 5",
+    "Зачёт"
+  ],
+
+  "Компьютерные сети": [
+    "ДЗ 1",
+    "ЛР 1",
+    "ЛР 2",
+    "ЛР 3",
+    "ЛР 4",
+    "Т1",
+    "Т2",
+    "Т3",
+    "ТИт"
+  ],
+
+  "Нейротехнологии и аффективные вычисления": [
+    // здесь указаны относительные веса (баллы) — скрипт нормализует их внутри дисциплины
+    { label: "Рубежная работа 1", weight: 10 },
+    { label: "Рубежная работа 2", weight: 10 },
+    // Проект: вес 40 разделён между пунктами (здесь даю каждому равную часть 40/5 = 8)
+    { label: "Проект: исследование", weight: 8 },
+    { label: "Проект: Прототип", weight: 8 },
+    { label: "Проект: улучшенный прототип", weight: 8 },
+    { label: "Проект: финальное решение", weight: 8 },
+    { label: "Проект: Защита", weight: 8 },
+    { label: "ЛР 1", weight: 10 },
+    { label: "ЛР 2", weight: 10 }
+  ],
+
+  "Программирование встроенных систем": [
+    "Проект (ТЗ)",
+    "Проект (реализация)",
+    "Проект (доработка)"
+  ],
+
+  "Сетевые технологии интернета вещей": [
+    "Проект (ТЗ)",
+    "Проект (получить компоненты)",
+    "Проект (собрать компоненты)",
+    "Проект (Собрать прототип)",
+    "Проект (Запрограммировать)",
+    "Проект (Собрать финальное устройство)"
+  ],
+
+  "САПР": [
+    "ДЗ 1",
+    "ДЗ 2",
+    "Тест",
+    "Экзамен"
+  ],
+
+  "Стартап-трек": Array.from({length:10}, (_,i)=>`Посещение ${i+1}`),
+
+  "ТПО (Тестирование ПО)": [
+    "ЛР 1",
+    "ЛР 2",
+    "ЛР 3",
+    "ЛР 4",
+    "Рубежная работа"
+  ],
+
+  "Физическая культура и спорт": Array.from({length:20}, (_,i)=>`Посещение ${i+1}`),
+
+  "Философия": [
+    // 10 посещений + экзамен + проект + Текст 1 + Тест 2
+    ...Array.from({length:10}, (_,i)=>`Посещение ${i+1}`),
+    "Экзамен",
+    "Проектная работа",
+    "Текст 1",
+    "Тест 2"
+  ]
 };
 
-const totalWeightPerDiscipline = 100 / Object.keys(disciplines).length;
-const container = document.getElementById("disciplines");
-
+// --- Сохранение / загрузка состояния ---
 function saveState() {
   const state = {};
-  document.querySelectorAll("input[type='checkbox']").forEach(cb=>state[cb.id]=cb.checked);
-  localStorage.setItem("trackerState", JSON.stringify(state));
+  document.querySelectorAll("input[type='checkbox']").forEach(cb=>{
+    state[cb.id] = cb.checked;
+  });
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
 function loadState() {
-  return JSON.parse(localStorage.getItem("trackerState")||"{}");
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+  } catch(e) {
+    return {};
+  }
 }
 
-function calculateProgress() {
-  let totalProgress = 0;
-  let uncheckedCount = 0;
-  const now = new Date();
-  // Изменено на 23 января 2026 года (конец сессии)
-  const endOfSession = new Date("2026-01-23T23:59:59");
-  const diffDays = Math.ceil((endOfSession - now)/(1000*60*60*24));
+// --- Рендер чеков ---
+const container = document.getElementById("disciplines");
 
-  for(const [discipline, checkpoints] of Object.entries(disciplines)){
-    const checked = checkpoints.filter((_,i)=>document.getElementById(`${discipline}-${i}`).checked).length;
-    totalProgress += (checked/checkpoints.length)*totalWeightPerDiscipline;
-    uncheckedCount += (checkpoints.length - checked);
-  }
-
-  // Рассчитываем скорость в днях на точку
-  const speedPerPoint = uncheckedCount > 0 ? (diffDays / uncheckedCount).toFixed(1) : "∞";
-  
-  // Рассчитываем количество точек в день (обратная величина)
-  let pointsPerDayText = "";
-  if (uncheckedCount > 0 && diffDays > 0) {
-    const pointsPerDay = (uncheckedCount / diffDays).toFixed(1);
-    // Правильное склонение слова "точка"
-    let pointWord = "точек";
-    const pointsNum = parseFloat(pointsPerDay);
-    if (pointsNum === 1) pointWord = "точка";
-    else if (pointsNum > 1 && pointsNum < 5) pointWord = "точки";
-    
-    pointsPerDayText = ` или ${pointsPerDay} ${pointWord}/день`;
-  } else if (uncheckedCount === 0) {
-    pointsPerDayText = " — все точки закрыты!";
-  } else if (diffDays <= 0) {
-    pointsPerDayText = " — время вышло!";
-  }
-
-  document.getElementById("speed").textContent = 
-    `Требуемая скорость закрытия — ${speedPerPoint} дней/точку${pointsPerDayText}`;
-  
-  document.getElementById("percent").textContent = totalProgress.toFixed(1)+"%";
-
-  const bar = document.getElementById("progress-fill");
-  bar.style.width = totalProgress+"%";
-
-  // Тёплые тона к НГ
-  const daysFromNov3 = Math.max(0, (now - new Date("2025-11-03"))/(1000*60*60*24));
-  const ratio = Math.min(daysFromNov3/60,1);
-  document.body.classList.toggle("warmer", ratio>0.4);
-}
-
-function render() {
+function render(){
   const saved = loadState();
-  for(const [discipline, checkpoints] of Object.entries(disciplines)){
+  container.innerHTML = "";
+  for(const [discipline, items] of Object.entries(disciplines)){
     const block = document.createElement("div");
-    block.classList.add("discipline");
+    block.className = "discipline";
+
     const title = document.createElement("h3");
     title.textContent = discipline;
     block.appendChild(title);
 
     const grid = document.createElement("div");
-    grid.classList.add("discipline-checkpoints");
+    grid.className = "discipline-checkpoints";
 
-    checkpoints.forEach((labelText,i)=>{
+    items.forEach((item, idx) => {
+      const labelText = (typeof item === "string") ? item : item.label;
+      const id = `${slugify(discipline)}-${idx}`;
+
       const wrapper = document.createElement("div");
-      wrapper.classList.add("checkpoint");
+      wrapper.className = "checkpoint";
 
       const checkbox = document.createElement("input");
-      const id = `${discipline}-${i}`;
       checkbox.type = "checkbox";
       checkbox.id = id;
-      checkbox.checked = saved[id]||false;
-      checkbox.addEventListener("change", ()=>{
-        saveState();
-        calculateProgress();
-      });
+      checkbox.checked = !!saved[id];
+      checkbox.addEventListener("change", ()=>{ saveState(); calculateProgress(); });
 
       const label = document.createElement("label");
       label.htmlFor = id;
@@ -274,29 +316,102 @@ function render() {
     block.appendChild(grid);
     container.appendChild(block);
   }
+
   calculateProgress();
 }
 
+// --- Расчёт прогресса ---
+// Каждый предмет получает равную долю от общей 100%:
+// disciplineWeightPercent = 100 / количество_дисциплин
+// Внутри дисциплины шаги могут иметь относительный вес (weight). Если вес не указан — равный.
+function calculateProgress(){
+  const now = new Date();
+  // Обновлён конец семестра (можешь изменить при необходимости)
+  const endOfSession = new Date("2026-06-30T23:59:59");
+  const diffDays = Math.ceil((endOfSession - now)/(1000*60*60*24));
+
+  const disciplineNames = Object.keys(disciplines);
+  const disciplineWeightPercent = 100 / disciplineNames.length;
+
+  let totalProgress = 0;
+  let uncheckedCount = 0;
+
+  for(const [discipline, items] of Object.entries(disciplines)){
+    // соберём объекты {label, weight}
+    const checkpoints = items.map(it => {
+      if (typeof it === "string") return { label: it, weight: 1 };
+      // weight может быть задан, иначе падёт в 1
+      return { label: it.label, weight: (typeof it.weight === "number" ? it.weight : 1) };
+    });
+
+    const totalWeight = checkpoints.reduce((s,c)=>s+c.weight, 0);
+    // суммарный вес отмеченных чеков
+    let checkedWeight = 0;
+    checkpoints.forEach((cp, i) => {
+      const id = `${slugify(discipline)}-${i}`;
+      const cb = document.getElementById(id);
+      if (cb && cb.checked) checkedWeight += cp.weight;
+      else uncheckedCount += 1;
+    });
+
+    const fraction = totalWeight > 0 ? (checkedWeight / totalWeight) : 0;
+    totalProgress += disciplineWeightPercent * fraction;
+  }
+
+  // ограничим от 0 до 100
+  totalProgress = Math.max(0, Math.min(100, totalProgress));
+
+  // скорость
+  const speedPerPoint = uncheckedCount > 0 && diffDays > 0 ? (diffDays / uncheckedCount).toFixed(1) : (uncheckedCount === 0 ? "∞" : "—");
+  let pointsPerDayText = "";
+  if (uncheckedCount > 0 && diffDays > 0) {
+    const pointsPerDay = (uncheckedCount / diffDays).toFixed(1);
+    let pointWord = "точек";
+    const num = parseFloat(pointsPerDay);
+    if (num === 1) pointWord = "точка";
+    else if (num > 1 && num < 5) pointWord = "точки";
+    pointsPerDayText = ` или ${pointsPerDay} ${pointWord}/день`;
+  } else if (uncheckedCount === 0) {
+    pointsPerDayText = " — все точки закрыты!";
+  } else if (diffDays <= 0) {
+    pointsPerDayText = " — время вышло!";
+  }
+
+  document.getElementById("speed").textContent =
+    `Требуемая скорость закрытия — ${speedPerPoint} дней/точку${pointsPerDayText}`;
+
+  document.getElementById("percent").textContent = totalProgress.toFixed(1) + "%";
+  const bar = document.getElementById("progress-fill");
+  bar.style.width = Math.max(0, Math.min(100, totalProgress)) + "%";
+
+  // Тёплые тона (маленький эффект)
+  const daysFromNov3 = Math.max(0, (now - new Date("2025-11-03"))/(1000*60*60*24));
+  const ratio = Math.min(daysFromNov3/60,1);
+  document.body.classList.toggle("warmer", ratio>0.4);
+}
+
+// --- Countdown (таймер) ---
 function updateCountdown(){
   const now = new Date();
-  // Изменено на 23 января 2026 года (конец сессии)
-  const endOfSession = new Date("2026-01-23T23:59:59");
+  const endOfSession = new Date("2026-06-30T23:59:59");
   const diff = endOfSession - now;
   const days = Math.floor(diff/(1000*60*60*24));
   const hours = Math.floor((diff/(1000*60*60))%24);
   const minutes = Math.floor((diff/(1000*60))%60);
   const seconds = Math.floor((diff/1000)%60);
-  
+
   if (diff > 0) {
-    document.getElementById("countdown").textContent=
-      `⏳ До конца сессии: ${days}д ${hours}ч ${minutes}м ${seconds}с`;
+    document.getElementById("countdown").textContent =
+      `⏳ До конца семестра: ${days}д ${hours}ч ${minutes}м ${seconds}с`;
   } else {
-    document.getElementById("countdown").textContent=
-      "⏳ Время вышло! Сессия завершена";
+    document.getElementById("countdown").textContent =
+      "⏳ Время вышло! Семестр завершён";
   }
 }
 
-setInterval(updateCountdown,1000);
+setInterval(updateCountdown, 1000);
+
+// --- Старт ---
 render();
 </script>
 </body>
